@@ -5,7 +5,8 @@ from qdrant_client import QdrantClient
 
 load_dotenv()
 openai_client = OpenAI()
-qdrant_client = QdrantClient(host="localhost", port=6333)
+QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+qdrant_client = QdrantClient(host=QDRANT_HOST, port=6333)
 
 COLLECTION_NAME = "aapl_filings"
 EMBEDDING_MODEL = "text-embedding-3-small"

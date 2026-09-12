@@ -4,3 +4,5 @@ tiktoken
 openai
 python-dotenv
 qdrant-client
+fastapi
+uvicorn

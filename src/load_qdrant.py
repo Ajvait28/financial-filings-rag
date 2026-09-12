@@ -8,7 +8,8 @@ EMBEDDINGS_DIR = "data/embeddings"
 COLLECTION_NAME = "aapl_filings"
 VECTOR_SIZE = 1536  # matches text-embedding-3-small's output size
 
-client = QdrantClient(host="localhost", port=6333)
+QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+client = QdrantClient(host=QDRANT_HOST, port=6333)
 
 def create_collection():
     # wipes and recreates the collection - fine for now since we're
