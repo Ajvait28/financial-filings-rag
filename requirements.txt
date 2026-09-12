@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+tiktoken
+openai
+python-dotenv
+qdrant-client
