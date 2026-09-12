@@ -1,3 +1,10 @@
+"""
+The generation half of the RAG pipeline: retrieves relevant chunks via
+search.py, builds a prompt that constrains the LLM to answer only from
+that retrieved context, and calls the LLM to produce a grounded,
+cited answer.
+"""
+
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -8,6 +15,9 @@ client = OpenAI()
 
 GENERATION_MODEL = "gpt-4o-mini"
 
+#Assembles the actual prompt sent to the LLM: each retrieved chunk is labeled with its source filing, then the instructions constrain the
+#model to answer only from that context, decline if the context is insufficient, and cite sources.
+#This is what keeps the system "grounded" instead of letting the LLM answer from its own training data or make things up.
 def build_prompt(question, retrieved_chunks):
     context_blocks = []
     for chunk in retrieved_chunks:
@@ -32,6 +42,9 @@ Answer:"""
 
     return prompt
 
+#Full RAG call: retrieves top_k chunks for the question, builds the grounded prompt, and generates an answer.
+#temperature=0 keeps output as deterministic/factual as possible, appropriate for a financial Q&A system rather than creative writing.
+#Returns both the answer text and the retrieved chunks, since callers need the chunks too (e.g. to report which sources were used).
 def answer_question(question, top_k=10):
     retrieved_chunks = search(question, top_k=top_k)
     prompt = build_prompt(question, retrieved_chunks)
@@ -44,6 +57,7 @@ def answer_question(question, top_k=10):
 
     return response.choices[0].message.content, retrieved_chunks
 
+#Quick manual test: ask a sample question and print the generated answer alongside which sources were retrieved for it.
 if __name__ == "__main__":
     question = "What was Apple's total net sales in the most recent quarter?"
 

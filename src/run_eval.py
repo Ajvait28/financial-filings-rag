@@ -1,20 +1,38 @@
+"""
+Runs every question in data/eval_questions.json through the actual RAG
+pipeline (answer_question) and saves the results to
+data/eval_results.json for review.
+
+This only handles what can be checked automatically - whether the
+expected source filing(s) actually showed up in retrieval. Judging
+whether the generated answer is actually correct and whether it
+hallucinated requires human judgment, so those fields are left as
+None here and filled in by hand (see review_eval.py and
+apply_grades.py) before running eval_summary.py.
+"""
+
 import json
 from generate_answer import answer_question
 
 EVAL_FILE = "data/eval_questions.json"
 RESULTS_FILE = "data/eval_results.json"
 
+#Checks whether the filing(s) we expected to be the answer's source actually appear anywhere among the retrieved chunks.
+#expected_source can list more than one filing (comma-separated) for cross-quarter comparison questions, in which case ALL of them must have been retrieved for this to count as a hit.
+#Returns None for questions with no expected source (the intentionally unanswerable ones), since the check doesn't apply to them.
 def retrieval_hit(expected_source, retrieved_chunks):
     if expected_source is None:
-        return None  # not applicable for unanswerable questions
+        return None
 
-    # expected_source can be a single source or a comma-separated list
+    #expected_source can be a single source or a comma-separated list
     expected_sources = [s.strip() for s in expected_source.split(",")]
     retrieved_sources = set(chunk.payload["source"] for chunk in retrieved_chunks)
 
     hits = [src for src in expected_sources if src in retrieved_sources]
-    return len(hits) == len(expected_sources)  # True only if ALL expected sources were retrieved
+    return len(hits) == len(expected_sources)
 
+#Loops through every eval question, runs it through the real pipeline, and records everything needed for grading: the generated answer, which sources got retrieved, and the automatic retrieval check.
+#answer_correct/hallucinated are left as placeholders for manual review.
 if __name__ == "__main__":
     with open(EVAL_FILE, "r", encoding="utf-8") as f:
         eval_questions = json.load(f)

@@ -1,3 +1,13 @@
+"""
+Given a plain-text question, embeds it with the same model used for
+the filing chunks, and retrieves the top-k most similar chunks from
+Qdrant. This is the retrieval half of the RAG pipeline - no LLM
+generation happens here, just nearest-neighbor vector search.
+
+Connects to Qdrant Cloud if QDRANT_URL is set in .env, otherwise falls
+back to a local Qdrant instance (same logic as load_qdrant.py).
+"""
+
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -17,6 +27,8 @@ else:
 COLLECTION_NAME = "aapl_filings"
 EMBEDDING_MODEL = "text-embedding-3-small"
 
+#Embeds a user's question using the same embedding model used for the filing chunks
+#Query and chunks need to live in the same "embedding space" for similarity search to be meaningful.
 def embed_query(query):
     response = openai_client.embeddings.create(
         model=EMBEDDING_MODEL,
@@ -24,6 +36,8 @@ def embed_query(query):
     )
     return response.data[0].embedding
 
+#Embeds the query and asks Qdrant for the top_k chunks whose vectors are closest to it (cosine similarity).
+#Returns the raw Qdrant result objects, each carrying a similarity score and the chunk's payload (text, source filing, chunk id).
 def search(query, top_k=5):
     query_vector = embed_query(query)
 
@@ -35,6 +49,7 @@ def search(query, top_k=5):
 
     return results.points
 
+#Quick manual test: run a sample question and print the top matches with their similarity scores, so retrieval quality can be eyeballed without involving the LLM generation step.
 if __name__ == "__main__":
     question = "What was Apple's total net sales in the most recent quarter?"
 
