@@ -3,13 +3,21 @@ import json
 import glob
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
+from dotenv import load_dotenv
+load_dotenv()
 
 EMBEDDINGS_DIR = "data/embeddings"
 COLLECTION_NAME = "aapl_filings"
 VECTOR_SIZE = 1536  # matches text-embedding-3-small's output size
 
-QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
-client = QdrantClient(host=QDRANT_HOST, port=6333)
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
+if QDRANT_URL:
+    client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+else:
+    QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+    client = QdrantClient(host=QDRANT_HOST, port=6333)
 
 def create_collection():
     # wipes and recreates the collection - fine for now since we're
